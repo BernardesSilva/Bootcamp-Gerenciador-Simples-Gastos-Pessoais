@@ -1,8 +1,7 @@
-# Bootcamp-Checklist-de-autocuidado-hidrata-o
-
+# Bootcamp-Gerenciador-Simples-Gastos-Pessoais
 (-Nome da Aplicação-)
 
-Aplicação para gerenciar o auto cuidado e hidratação pessoal como atividade inicial de Bootcamp II
+Aplicação para gerenciar os gastos pessoais como atividade inicial de Bootcamp II
 
 Autor: Leandro Bernardes
 
