@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Meus Gastos - Bootcamp</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>💰 Meus Gastos</h1>
+        <div class="input-group">
+            <input type="text" id="desc" placeholder="Descrição do gasto">
+            <input type="number" id="valor" placeholder="Valor (R$)">
+            <button onclick="adicionarGasto()">Adicionar</button>
+        </div>
+        
+        <ul id="lista-gastos"></ul>
+        <div class="total">Total: R$ <span id="total-valor">0,00</span></div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
