@@ -1,5 +1,5 @@
 # Bootcamp-Gerenciador-Simples-Gastos-Pessoais
-(-Nome da Aplicação-)
+(-FinanceX-)
 
 Aplicação para gerenciar os gastos pessoais como atividade inicial de Bootcamp II
 
@@ -10,4 +10,5 @@ Clone o repositório...
 TODO: Melhorar o texto...
 
 Como Usar ?
-TODO: Melhorar o texto...
+O usuário define o vaor de sua renda, e após a realização de cada compra o mesmo
+adiciona na apliação, fazendo um controle de seus gastos

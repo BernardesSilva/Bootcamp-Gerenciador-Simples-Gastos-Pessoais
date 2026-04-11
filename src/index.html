@@ -2,20 +2,68 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Meus Gastos - Bootcamp</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinanceX - Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <div class="container">
-        <h1>💰 Meus Gastos</h1>
-        <div class="input-group">
-            <input type="text" id="desc" placeholder="Descrição do gasto">
-            <input type="number" id="valor" placeholder="Valor (R$)">
-            <button onclick="adicionarGasto()">Adicionar</button>
+    <div class="dashboard-container">
+        <div class="card main-panel">
+            <h1 class="logo">💰 FinanceX</h1>
+            
+            <div class="input-group">
+                <div class="field">
+                    <input type="text" id="desc" placeholder="Descrição">
+                    <span class="error-msg">Obrigatório!</span>
+                </div>
+                <div class="field">
+                    <input type="number" id="valor" placeholder="R$ 0,00" step="0.01">
+                    <span class="error-msg">Mín. R$ 0,10!</span>
+                </div>
+                <div class="field">
+                    <input type="date" id="data">
+                    <span class="error-msg">Data inválida!</span>
+                </div>
+                <select id="categoria">
+                    <option value="Alimentação">🛒 Alimentação</option>
+                    <option value="Transporte">🚗 Transporte</option>
+                    <option value="Lazer">🍿 Lazer</option>
+                    <option value="Outros">⚙️ Outros</option>
+                </select>
+                <button onclick="adicionarGasto()" id="btn-registrar">Registrar</button>
+            </div>
+
+            <ul id="lista-gastos"></ul>
         </div>
-        
-        <ul id="lista-gastos"></ul>
-        <div class="total">Total: R$ <span id="total-valor">0,00</span></div>
+
+        <div class="side-panel">
+            <div class="card budget-card">
+                <h3>Minha Renda</h3>
+                <div class="budget-input">
+                    <input type="number" id="renda-input" placeholder="Ex: 1400,00">
+                    <button onclick="definirRenda()">Definir</button>
+                </div>
+            </div>
+
+            <div class="card info-card">
+                <p class="total-label">Gasto Total:</p>
+                <h2 id="total-valor">R$ 0,00</h2>
+                
+                <div class="progress-bar-bg">
+                    <div id="progress-bar" class="progress-bar-fill"></div>
+                </div>
+                <div class="meta-status">
+                    <small id="display-meta">Orçamento: R$ 0,00</small>
+                    <small id="saldo-meta">R$ 0,00 restantes</small>
+                </div>
+            </div>
+
+            <div class="card chart-card">
+                <canvas id="meuGrafico"></canvas>
+            </div>
+        </div>
     </div>
     <script src="script.js"></script>
 </body>
