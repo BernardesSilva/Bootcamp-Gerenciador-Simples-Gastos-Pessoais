@@ -11,7 +11,13 @@
 <body>
     <div class="dashboard-container">
         <div class="card main-panel">
-            <h1 class="logo">💰 FinanceX</h1>
+            <div class="header-main">
+                <h1 class="logo">💰 FinanceX</h1>
+                <div class="header-actions">
+                    <button onclick="prepararFechamento()" class="btn-finish">🔒 Finalizar Mês</button>
+                    <button onclick="confirmarAcao('ATUAL')" class="btn-clear">Limpar Atual</button>
+                </div>
+            </div>
             
             <div class="input-group">
                 <div class="field">
@@ -24,7 +30,7 @@
                 </div>
                 <div class="field">
                     <input type="date" id="data">
-                    <span class="error-msg">Data inválida!</span>
+                    <span class="error-msg">Inválido!</span>
                 </div>
                 <select id="categoria">
                     <option value="Alimentação">🛒 Alimentação</option>
@@ -35,7 +41,22 @@
                 <button onclick="adicionarGasto()" id="btn-registrar">Registrar</button>
             </div>
 
-            <ul id="lista-gastos"></ul>
+            <div id="cards-categorias" class="category-grid"></div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Descrição</th>
+                            <th>Categoria</th>
+                            <th>Data</th>
+                            <th>Valor</th>
+                            <th>Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody id="corpo-tabela"></tbody>
+                </table>
+            </div>
         </div>
 
         <div class="side-panel">
@@ -48,9 +69,8 @@
             </div>
 
             <div class="card info-card">
-                <p class="total-label">Gasto Total:</p>
+                <p class="total-label">Gasto Total (Atual):</p>
                 <h2 id="total-valor">R$ 0,00</h2>
-                
                 <div class="progress-bar-bg">
                     <div id="progress-bar" class="progress-bar-fill"></div>
                 </div>
@@ -60,11 +80,53 @@
                 </div>
             </div>
 
+            <div class="card history-card">
+                <h3>📂 Histórico de Meses</h3>
+                <ul id="lista-meses-fechados"></ul>
+            </div>
+
             <div class="card chart-card">
                 <canvas id="meuGrafico"></canvas>
             </div>
+
+            <div class="version-tag">v1.0.0</div>
         </div>
     </div>
+
+    <div id="modal-historico" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-titulo">Detalhes do Mês</h2>
+                <span class="close-modal" onclick="fecharModal('modal-historico')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Descrição</th>
+                            <th>Categoria</th>
+                            <th>Data</th>
+                            <th>Valor</th>
+                        </tr>
+                    </thead>
+                    <tbody id="corpo-modal"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-confirmacao" class="modal">
+        <div class="modal-content confirm-box">
+            <span class="close-modal" onclick="fecharModal('modal-confirmacao')" style="float:right; margin-top:-10px">&times;</span>
+            <h3 id="confirm-titulo" style="margin-top:10px">Tem certeza?</h3>
+            <p id="confirm-mensagem"></p>
+            <div class="confirm-buttons">
+                <button id="btn-confirmar-sim" class="btn-sim">Sim, Confirmar</button>
+                <button onclick="fecharModal('modal-confirmacao')" class="btn-nao">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>

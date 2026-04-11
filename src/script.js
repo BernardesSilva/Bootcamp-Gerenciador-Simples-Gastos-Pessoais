@@ -1,5 +1,6 @@
 let gastos = JSON.parse(localStorage.getItem('f_data')) || [];
 let rendaUsuario = parseFloat(localStorage.getItem('f_renda')) || 0;
+let historicoMeses = JSON.parse(localStorage.getItem('f_historico')) || [];
 let meuGrafico;
 
 window.onload = () => {
@@ -9,149 +10,142 @@ window.onload = () => {
     atualizarTela();
 };
 
-function definirRenda() {
-    const valor = parseFloat(document.getElementById('renda-input').value);
-    if (isNaN(valor) || valor < 0) {
-        alert("Defina um valor de renda válido!");
-        return;
+// --- MODAL DE CONFIRMAÇÃO ---
+function confirmarAcao(tipo, id = null) {
+    const modal = document.getElementById('modal-confirmacao');
+    const titulo = document.getElementById('confirm-titulo');
+    const msg = document.getElementById('confirm-mensagem');
+    const btnSim = document.getElementById('btn-confirmar-sim');
+    modal.style.display = "block";
+
+    if (tipo === 'FECHAR_MES') {
+        titulo.innerText = "Encerrar Mês?";
+        msg.innerText = "Os gastos atuais serão movidos para o histórico.";
+        btnSim.onclick = () => { fecharMesEfetivo(); fecharModal('modal-confirmacao'); };
+    } else if (tipo === 'EXCLUIR_HISTORICO') {
+        titulo.innerText = "Excluir Histórico?";
+        msg.innerText = "Isso apagará este mês permanentemente.";
+        btnSim.onclick = () => { excluirMesEfetivo(id); fecharModal('modal-confirmacao'); };
+    } else if (tipo === 'ATUAL') {
+        titulo.innerText = "Limpar Tudo?";
+        msg.innerText = "Isso apagará os gastos da lista atual.";
+        btnSim.onclick = () => { gastos = []; salvar(); atualizarTela(); fecharModal('modal-confirmacao'); };
     }
-    rendaUsuario = valor;
-    localStorage.setItem('f_renda', rendaUsuario);
-    atualizarTela();
 }
 
+function fecharModal(id) { document.getElementById(id).style.display = "none"; }
+
+// --- LÓGICA DE NEGÓCIO ---
 function adicionarGasto() {
-    const descEl = document.getElementById('desc');
-    const valorEl = document.getElementById('valor');
-    const dataEl = document.getElementById('data');
+    const desc = document.getElementById('desc');
+    const valor = document.getElementById('valor');
+    const data = document.getElementById('data');
     const categoria = document.getElementById('categoria').value;
 
-    // Resetar erros anteriores
     document.querySelectorAll('.field').forEach(f => f.classList.remove('error'));
-
-    let temErro = false;
-
-    // Regra 1: Descrição obrigatória
-    if (descEl.value.trim() === "") {
-        descEl.parentElement.classList.add('error');
-        temErro = true;
+    if (!desc.value || !valor.value || !data.value) {
+        if(!desc.value) desc.parentElement.classList.add('error');
+        if(!valor.value) valor.parentElement.classList.add('error');
+        if(!data.value) data.parentElement.classList.add('error');
+        return;
     }
 
-    // Regra 2: Valor mínimo de 0.10
-    const valorNum = parseFloat(valorEl.value);
-    if (isNaN(valorNum) || valorNum < 0.1) {
-        valorEl.parentElement.classList.add('error');
-        temErro = true;
-    }
-
-    // Regra 3: Data obrigatória
-    if (!dataEl.value) {
-        dataEl.parentElement.classList.add('error');
-        temErro = true;
-    }
-
-    if (temErro) return;
-
-    // Se tudo ok, adiciona
-    gastos.push({ 
-        id: Date.now(), 
-        desc: descEl.value, 
-        valor: valorNum, 
-        categoria, 
-        data: dataEl.value 
-    });
-
-    gastos.sort((a, b) => new Date(b.data) - new Date(a.data));
-    localStorage.setItem('f_data', JSON.stringify(gastos));
-    
-    atualizarTela();
-    
-    // Limpar campos
-    descEl.value = "";
-    valorEl.value = "";
+    gastos.push({ id: Date.now(), desc: desc.value, valor: parseFloat(valor.value), categoria, data: data.value });
+    salvar(); atualizarTela();
+    desc.value = ""; valor.value = "";
 }
 
-function removerGasto(id) {
-    if (confirm("Deseja excluir este gasto?")) {
-        gastos = gastos.filter(g => g.id !== id);
-        localStorage.setItem('f_data', JSON.stringify(gastos));
-        atualizarTela();
-    }
+function definirRenda() {
+    const v = parseFloat(document.getElementById('renda-input').value);
+    if (!isNaN(v)) { rendaUsuario = v; localStorage.setItem('f_renda', v); atualizarTela(); }
+}
+
+function fecharMesEfetivo() {
+    const nomeMes = new Date().toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+    historicoMeses.push({ id: Date.now(), mes: nomeMes, total: gastos.reduce((a, b) => a + b.valor, 0), itens: [...gastos] });
+    gastos = []; salvar(); atualizarTela();
+}
+
+function excluirMesEfetivo(id) {
+    historicoMeses = historicoMeses.filter(m => m.id !== id);
+    salvar(); atualizarTela();
+}
+
+function salvar() {
+    localStorage.setItem('f_data', JSON.stringify(gastos));
+    localStorage.setItem('f_historico', JSON.stringify(historicoMeses));
 }
 
 function atualizarTela() {
-    const lista = document.getElementById('lista-gastos');
-    const totalDisplay = document.getElementById('total-valor');
-    const barra = document.getElementById('progress-bar');
-    const saldoMetaDisplay = document.getElementById('saldo-meta');
+    const corpo = document.getElementById('corpo-tabela');
+    const displayTotal = document.getElementById('total-valor');
     const displayMeta = document.getElementById('display-meta');
-    
-    lista.innerHTML = "";
+    const saldoMeta = document.getElementById('saldo-meta');
+    const barra = document.getElementById('progress-bar');
+    const listaHist = document.getElementById('lista-meses-fechados');
+    const cardsCat = document.getElementById('cards-categorias');
+
+    corpo.innerHTML = "";
     let soma = 0;
+    const totais = { 'Alimentação': 0, 'Transporte': 0, 'Lazer': 0, 'Outros': 0 };
 
     gastos.forEach(g => {
         soma += g.valor;
-        const dataFormatada = g.data.split('-').reverse().join('/');
-        lista.innerHTML += `
-            <li>
-                <div><strong>${g.desc}</strong><br><small style="color:#a0a8b8">${g.categoria} • ${dataFormatada}</small></div>
-                <span>R$ ${g.valor.toFixed(2).replace('.', ',')} 
-                    <button onclick="removerGasto(${g.id})" style="background:none; border:none; color:#e74c3c; cursor:pointer; margin-left:10px">🗑️</button>
-                </span>
-            </li>
-        `;
+        totais[g.categoria] += g.valor;
+        corpo.innerHTML += `<tr><td>${g.desc}</td><td>${g.categoria}</td><td>${g.data.split('-').reverse().join('/')}</td><td>R$ ${g.valor.toFixed(2)}</td><td><button onclick="removerGasto(${g.id})" style="background:none; border:none; color:#e74c3c; cursor:pointer">🗑️</button></td></tr>`;
     });
 
-    totalDisplay.innerText = `R$ ${soma.toFixed(2).replace('.', ',')}`;
-    displayMeta.innerText = `Orçamento: R$ ${rendaUsuario.toFixed(2).replace('.', ',')}`;
-    
-    let perc = rendaUsuario > 0 ? Math.min((soma / rendaUsuario) * 100, 100) : 0;
-    barra.style.width = perc + "%";
-    
-    const corVerde = "#2ecc71";
-    const corVermelha = "#e74c3c";
-
-    if (perc > 80) {
-        barra.style.backgroundColor = corVermelha;
-        totalDisplay.style.color = corVermelha;
-    } else {
-        barra.style.backgroundColor = corVerde;
-        totalDisplay.style.color = corVerde;
+    cardsCat.innerHTML = "";
+    for (let c in totais) {
+        cardsCat.innerHTML += `<div class="cat-card" style="border-top-color:${getColor(c)}"><span>${c}</span><strong>R$ ${totais[c].toFixed(2)}</strong></div>`;
     }
 
-    const saldo = rendaUsuario - soma;
-    saldoMetaDisplay.innerText = rendaUsuario === 0 
-        ? "Defina sua renda!" 
-        : (saldo >= 0 ? `R$ ${saldo.toFixed(2).replace('.', ',')} restantes` : "Orçamento estourado!");
+    listaHist.innerHTML = "";
+    [...historicoMeses].reverse().forEach(m => {
+        listaHist.innerHTML += `
+            <li class="mes-item">
+                <div onclick="verDetalhes(${m.id})" style="flex-grow:1; display:flex; justify-content:space-between; cursor:pointer">
+                    <span>${m.mes}</span>
+                    <strong>R$ ${m.total.toFixed(2)}</strong>
+                </div>
+                <button class="btn-delete-history" onclick="confirmarAcao('EXCLUIR_HISTORICO', ${m.id})" style="margin-left:15px">🗑️</button>
+            </li>`;
+    });
 
-    atualizarGrafico();
+    displayTotal.innerText = `R$ ${soma.toFixed(2)}`;
+    displayMeta.innerText = `Orçamento: R$ ${rendaUsuario.toFixed(2)}`;
+    
+    const saldo = rendaUsuario - soma;
+    saldoMeta.innerText = rendaUsuario === 0 ? "Defina sua renda!" : (saldo >= 0 ? `R$ ${saldo.toFixed(2)} restantes` : "Orçamento estourado!");
+
+    let perc = rendaUsuario > 0 ? Math.min((soma / rendaUsuario) * 100, 100) : 0;
+    barra.style.width = perc + "%";
+    barra.style.backgroundColor = perc > 80 ? "#e74c3c" : "#2ecc71";
+    atualizarGrafico(totais);
 }
+
+function verDetalhes(id) {
+    const mes = historicoMeses.find(m => m.id === id);
+    document.getElementById('modal-titulo').innerText = `Detalhes: ${mes.mes}`;
+    const corpo = document.getElementById('corpo-modal');
+    corpo.innerHTML = "";
+    mes.itens.forEach(i => {
+        corpo.innerHTML += `<tr><td>${i.desc}</td><td>${i.categoria}</td><td>${i.data.split('-').reverse().join('/')}</td><td>R$ ${i.valor.toFixed(2)}</td></tr>`;
+    });
+    document.getElementById('modal-historico').style.display = "block";
+}
+
+function prepararFechamento() { if (gastos.length > 0) confirmarAcao('FECHAR_MES'); }
+function removerGasto(id) { gastos = gastos.filter(g => g.id !== id); salvar(); atualizarTela(); }
+function getColor(cat) { return { 'Alimentação': '#3498db', 'Transporte': '#f1c40f', 'Lazer': '#9b59b6', 'Outros': '#95a5a6' }[cat]; }
 
 function inicializarGrafico() {
     const ctx = document.getElementById('meuGrafico').getContext('2d');
-    Chart.defaults.color = '#a0a8b8';
     meuGrafico = new Chart(ctx, {
         type: 'doughnut',
-        data: {
-            labels: ['Alimentação', 'Transporte', 'Lazer', 'Outros'],
-            datasets: [{
-                data: [0, 0, 0, 0],
-                backgroundColor: ['#3498db', '#f1c40f', '#9b59b6', '#95a5a6'],
-                borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { position: 'bottom' } },
-            cutout: '80%'
-        }
+        data: { labels: ['Alimentação', 'Transporte', 'Lazer', 'Outros'], datasets: [{ data: [0,0,0,0], backgroundColor: ['#3498db', '#f1c40f', '#9b59b6', '#95a5a6'], borderWidth: 0 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, cutout: '80%' }
     });
 }
 
-function atualizarGrafico() {
-    const totais = { 'Alimentação': 0, 'Transporte': 0, 'Lazer': 0, 'Outros': 0 };
-    gastos.forEach(g => { if(totais[g.categoria] !== undefined) totais[g.categoria] += g.valor; });
-    meuGrafico.data.datasets[0].data = Object.values(totais);
-    meuGrafico.update();
-}
+function atualizarGrafico(dados) { if (meuGrafico) { meuGrafico.data.datasets[0].data = Object.values(dados); meuGrafico.update(); } }
