@@ -68,14 +68,30 @@
                 </div>
             </div>
 
+            <div class="card invest-card">
+                <h3>📈 Investimentos</h3>
+                <div class="invest-inputs">
+                    <input type="number" id="invest-meta" placeholder="Meta Total">
+                    <input type="number" id="invest-aporte" placeholder="+ Aporte">
+                    <button onclick="adicionarAporte()">Reservar</button>
+                </div>
+                <div class="progress-bar-bg">
+                    <div id="invest-bar" class="progress-bar-fill invest-bar-color"></div>
+                </div>
+                <div class="meta-status">
+                    <small id="display-invest-meta">Meta: R$ 0,00</small>
+                    <small id="display-invest-valor">Total: R$ 0,00</small>
+                </div>
+            </div>
+
             <div class="card info-card">
-                <p class="total-label">Gasto Total (Atual):</p>
+                <p class="total-label">Saldo Disponível:</p>
                 <h2 id="total-valor">R$ 0,00</h2>
                 <div class="progress-bar-bg">
                     <div id="progress-bar" class="progress-bar-fill"></div>
                 </div>
                 <div class="meta-status">
-                    <small id="display-meta">Orçamento: R$ 0,00</small>
+                    <small id="display-meta">Renda: R$ 0,00</small>
                     <small id="saldo-meta">R$ 0,00 restantes</small>
                 </div>
             </div>
@@ -89,7 +105,7 @@
                 <canvas id="meuGrafico"></canvas>
             </div>
 
-            <div class="version-tag">v1.0.0</div>
+            <div class="version-tag">v1.1.0</div>
         </div>
     </div>
 

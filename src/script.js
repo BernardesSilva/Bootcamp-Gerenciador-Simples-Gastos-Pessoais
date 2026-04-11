@@ -1,16 +1,17 @@
 let gastos = JSON.parse(localStorage.getItem('f_data')) || [];
 let rendaUsuario = parseFloat(localStorage.getItem('f_renda')) || 0;
 let historicoMeses = JSON.parse(localStorage.getItem('f_historico')) || [];
+let investimento = JSON.parse(localStorage.getItem('f_invest')) || { meta: 0, acumulado: 0 };
 let meuGrafico;
 
 window.onload = () => {
     document.getElementById('data').valueAsDate = new Date();
     document.getElementById('renda-input').value = rendaUsuario;
+    document.getElementById('invest-meta').value = investimento.meta;
     inicializarGrafico();
     atualizarTela();
 };
 
-// --- MODAL DE CONFIRMAÇÃO ---
 function confirmarAcao(tipo, id = null) {
     const modal = document.getElementById('modal-confirmacao');
     const titulo = document.getElementById('confirm-titulo');
@@ -20,7 +21,7 @@ function confirmarAcao(tipo, id = null) {
 
     if (tipo === 'FECHAR_MES') {
         titulo.innerText = "Encerrar Mês?";
-        msg.innerText = "Os gastos atuais serão movidos para o histórico.";
+        msg.innerText = "Gastos e investimentos serão salvos no histórico.";
         btnSim.onclick = () => { fecharMesEfetivo(); fecharModal('modal-confirmacao'); };
     } else if (tipo === 'EXCLUIR_HISTORICO') {
         titulo.innerText = "Excluir Histórico?";
@@ -35,7 +36,6 @@ function confirmarAcao(tipo, id = null) {
 
 function fecharModal(id) { document.getElementById(id).style.display = "none"; }
 
-// --- LÓGICA DE NEGÓCIO ---
 function adicionarGasto() {
     const desc = document.getElementById('desc');
     const valor = document.getElementById('valor');
@@ -60,10 +60,37 @@ function definirRenda() {
     if (!isNaN(v)) { rendaUsuario = v; localStorage.setItem('f_renda', v); atualizarTela(); }
 }
 
+function adicionarAporte() {
+    const metaInput = document.getElementById('invest-meta');
+    const aporteInput = document.getElementById('invest-aporte');
+    
+    const novaMeta = parseFloat(metaInput.value) || 0;
+    const valorAporte = parseFloat(aporteInput.value) || 0;
+
+    if (valorAporte > 0 || novaMeta !== investimento.meta) {
+        investimento.meta = novaMeta;
+        investimento.acumulado += valorAporte;
+        
+        localStorage.setItem('f_invest', JSON.stringify(investimento));
+        aporteInput.value = ""; 
+        atualizarTela();
+    }
+}
+
 function fecharMesEfetivo() {
     const nomeMes = new Date().toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
-    historicoMeses.push({ id: Date.now(), mes: nomeMes, total: gastos.reduce((a, b) => a + b.valor, 0), itens: [...gastos] });
-    gastos = []; salvar(); atualizarTela();
+    historicoMeses.push({ 
+        id: Date.now(), 
+        mes: nomeMes, 
+        total: gastos.reduce((a, b) => a + b.valor, 0), 
+        investido: investimento.acumulado,
+        itens: [...gastos] 
+    });
+    gastos = [];
+    investimento.acumulado = 0; 
+    salvar();
+    localStorage.setItem('f_invest', JSON.stringify(investimento));
+    atualizarTela();
 }
 
 function excluirMesEfetivo(id) {
@@ -85,12 +112,21 @@ function atualizarTela() {
     const listaHist = document.getElementById('lista-meses-fechados');
     const cardsCat = document.getElementById('cards-categorias');
 
+    const invBar = document.getElementById('invest-bar');
+    const dispInvMeta = document.getElementById('display-invest-meta');
+    const dispInvVal = document.getElementById('display-invest-valor');
+    
+    dispInvMeta.innerText = `Meta: R$ ${investimento.meta.toFixed(2)}`;
+    dispInvVal.innerText = `Total: R$ ${investimento.acumulado.toFixed(2)}`;
+    let percInv = investimento.meta > 0 ? Math.min((investimento.acumulado / investimento.meta) * 100, 100) : 0;
+    invBar.style.width = percInv + "%";
+
     corpo.innerHTML = "";
-    let soma = 0;
+    let somaGastos = 0;
     const totais = { 'Alimentação': 0, 'Transporte': 0, 'Lazer': 0, 'Outros': 0 };
 
     gastos.forEach(g => {
-        soma += g.valor;
+        somaGastos += g.valor;
         totais[g.categoria] += g.valor;
         corpo.innerHTML += `<tr><td>${g.desc}</td><td>${g.categoria}</td><td>${g.data.split('-').reverse().join('/')}</td><td>R$ ${g.valor.toFixed(2)}</td><td><button onclick="removerGasto(${g.id})" style="background:none; border:none; color:#e74c3c; cursor:pointer">🗑️</button></td></tr>`;
     });
@@ -102,25 +138,20 @@ function atualizarTela() {
 
     listaHist.innerHTML = "";
     [...historicoMeses].reverse().forEach(m => {
-        listaHist.innerHTML += `
-            <li class="mes-item">
-                <div onclick="verDetalhes(${m.id})" style="flex-grow:1; display:flex; justify-content:space-between; cursor:pointer">
-                    <span>${m.mes}</span>
-                    <strong>R$ ${m.total.toFixed(2)}</strong>
-                </div>
-                <button class="btn-delete-history" onclick="confirmarAcao('EXCLUIR_HISTORICO', ${m.id})" style="margin-left:15px">🗑️</button>
-            </li>`;
+        listaHist.innerHTML += `<li class="mes-item"><div onclick="verDetalhes(${m.id})" style="flex-grow:1; display:flex; justify-content:space-between; cursor:pointer"><span>${m.mes}</span><strong>R$ ${(m.total + (m.investido || 0)).toFixed(2)}</strong></div><button class="btn-delete-history" onclick="confirmarAcao('EXCLUIR_HISTORICO', ${m.id})" style="margin-left:15px">🗑️</button></li>`;
     });
 
-    displayTotal.innerText = `R$ ${soma.toFixed(2)}`;
-    displayMeta.innerText = `Orçamento: R$ ${rendaUsuario.toFixed(2)}`;
-    
-    const saldo = rendaUsuario - soma;
-    saldoMeta.innerText = rendaUsuario === 0 ? "Defina sua renda!" : (saldo >= 0 ? `R$ ${saldo.toFixed(2)} restantes` : "Orçamento estourado!");
+    const totalComprometido = somaGastos + investimento.acumulado;
+    const saldoFinal = rendaUsuario - totalComprometido;
 
-    let perc = rendaUsuario > 0 ? Math.min((soma / rendaUsuario) * 100, 100) : 0;
-    barra.style.width = perc + "%";
-    barra.style.backgroundColor = perc > 80 ? "#e74c3c" : "#2ecc71";
+    displayTotal.innerText = `R$ ${saldoFinal.toFixed(2)}`;
+    displayMeta.innerText = `Renda: R$ ${rendaUsuario.toFixed(2)}`;
+    saldoMeta.innerText = rendaUsuario === 0 ? "Defina sua renda!" : (saldoFinal >= 0 ? `Sobram R$ ${saldoFinal.toFixed(2)}` : "Orçamento estourado!");
+
+    let percGasto = rendaUsuario > 0 ? Math.min((totalComprometido / rendaUsuario) * 100, 100) : 0;
+    barra.style.width = percGasto + "%";
+    barra.style.backgroundColor = percGasto > 90 ? "#e74c3c" : "#2ecc71";
+    
     atualizarGrafico(totais);
 }
 
@@ -132,20 +163,19 @@ function verDetalhes(id) {
     mes.itens.forEach(i => {
         corpo.innerHTML += `<tr><td>${i.desc}</td><td>${i.categoria}</td><td>${i.data.split('-').reverse().join('/')}</td><td>R$ ${i.valor.toFixed(2)}</td></tr>`;
     });
+    if (mes.investido > 0) {
+        corpo.innerHTML += `<tr style="background: rgba(52, 152, 219, 0.1); font-weight: bold;"><td>Total Investido</td><td>📈 Investimento</td><td>-</td><td>R$ ${mes.investido.toFixed(2)}</td></tr>`;
+    }
     document.getElementById('modal-historico').style.display = "block";
 }
 
-function prepararFechamento() { if (gastos.length > 0) confirmarAcao('FECHAR_MES'); }
+function prepararFechamento() { if (gastos.length > 0 || investimento.acumulado > 0) confirmarAcao('FECHAR_MES'); }
 function removerGasto(id) { gastos = gastos.filter(g => g.id !== id); salvar(); atualizarTela(); }
 function getColor(cat) { return { 'Alimentação': '#3498db', 'Transporte': '#f1c40f', 'Lazer': '#9b59b6', 'Outros': '#95a5a6' }[cat]; }
 
 function inicializarGrafico() {
     const ctx = document.getElementById('meuGrafico').getContext('2d');
-    meuGrafico = new Chart(ctx, {
-        type: 'doughnut',
-        data: { labels: ['Alimentação', 'Transporte', 'Lazer', 'Outros'], datasets: [{ data: [0,0,0,0], backgroundColor: ['#3498db', '#f1c40f', '#9b59b6', '#95a5a6'], borderWidth: 0 }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, cutout: '80%' }
-    });
+    meuGrafico = new Chart(ctx, { type: 'doughnut', data: { labels: ['Alimentação', 'Transporte', 'Lazer', 'Outros'], datasets: [{ data: [0,0,0,0], backgroundColor: ['#3498db', '#f1c40f', '#9b59b6', '#95a5a6'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, cutout: '80%' } });
 }
 
 function atualizarGrafico(dados) { if (meuGrafico) { meuGrafico.data.datasets[0].data = Object.values(dados); meuGrafico.update(); } }
