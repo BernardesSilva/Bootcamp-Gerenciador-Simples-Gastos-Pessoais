@@ -1,10 +1,13 @@
-// Simulação da lógica de cálculo do FinanceX para o Jest
-const calcularSaldo = (renda, despesas) => renda - despesas;
+const { calcularSaldo } = require('../src/script');
 
-test('Deve subtrair corretamente as despesas da renda total', () => {
-    const renda = 1405;
-    const gasto = 12;
-    const resultadoEsperado = 1393;
+test('Cenário Feliz: Deve subtrair corretamente as despesas da renda total', () => {
+    expect(calcularSaldo(1000, 200)).toBe(800);
+});
 
-    expect(calcularSaldo(renda, gasto)).toBe(resultadoEsperado);
+test('Entrada Inválida: Deve retornar 0 se os valores não forem números', () => {
+    expect(calcularSaldo("mil", 200)).toBe(0);
+});
+
+test('Caso Limite: Deve retornar 0 se a despesa for igual à renda', () => {
+    expect(calcularSaldo(500, 500)).toBe(0);
 });

@@ -1,16 +1,34 @@
+// --- CONFIGURAÇÃO PARA TESTES (MOCK LOCALSTORAGE) ---
+if (typeof localStorage === "undefined" || localStorage === null) {
+    const { LocalStorage } = require('node-localstorage');
+    global.localStorage = new LocalStorage('./scratch');
+}
+
+// --- VARIÁVEIS GLOBAIS ---
 let gastos = JSON.parse(localStorage.getItem('f_data')) || [];
 let rendaUsuario = parseFloat(localStorage.getItem('f_renda')) || 0;
 let historicoMeses = JSON.parse(localStorage.getItem('f_historico')) || [];
 let investimento = JSON.parse(localStorage.getItem('f_invest')) || { meta: 0, acumulado: 0 };
 let meuGrafico;
 
-window.onload = () => {
-    document.getElementById('data').valueAsDate = new Date();
-    document.getElementById('renda-input').value = rendaUsuario;
-    document.getElementById('invest-meta').value = investimento.meta;
-    inicializarGrafico();
-    atualizarTela();
-};
+// --- FUNÇÃO DE CÁLCULO (A QUE O JEST TESTA) ---
+function calcularSaldo(renda, despesas) {
+    const r = parseFloat(renda);
+    const d = parseFloat(despesas);
+    if (isNaN(r) || isNaN(d)) return 0;
+    return r - d;
+}
+
+// --- LÓGICA DA INTERFACE ---
+if (typeof window !== 'undefined') {
+    window.onload = () => {
+        document.getElementById('data').valueAsDate = new Date();
+        document.getElementById('renda-input').value = rendaUsuario;
+        document.getElementById('invest-meta').value = investimento.meta;
+        inicializarGrafico();
+        atualizarTela();
+    };
+}
 
 function confirmarAcao(tipo, id = null) {
     const modal = document.getElementById('modal-confirmacao');
@@ -63,14 +81,12 @@ function definirRenda() {
 function adicionarAporte() {
     const metaInput = document.getElementById('invest-meta');
     const aporteInput = document.getElementById('invest-aporte');
-    
     const novaMeta = parseFloat(metaInput.value) || 0;
     const valorAporte = parseFloat(aporteInput.value) || 0;
 
     if (valorAporte > 0 || novaMeta !== investimento.meta) {
         investimento.meta = novaMeta;
         investimento.acumulado += valorAporte;
-        
         localStorage.setItem('f_invest', JSON.stringify(investimento));
         aporteInput.value = ""; 
         atualizarTela();
@@ -111,7 +127,6 @@ function atualizarTela() {
     const barra = document.getElementById('progress-bar');
     const listaHist = document.getElementById('lista-meses-fechados');
     const cardsCat = document.getElementById('cards-categorias');
-
     const invBar = document.getElementById('invest-bar');
     const dispInvMeta = document.getElementById('display-invest-meta');
     const dispInvVal = document.getElementById('display-invest-valor');
@@ -142,7 +157,7 @@ function atualizarTela() {
     });
 
     const totalComprometido = somaGastos + investimento.acumulado;
-    const saldoFinal = rendaUsuario - totalComprometido;
+    const saldoFinal = calcularSaldo(rendaUsuario, totalComprometido);
 
     displayTotal.innerText = `R$ ${saldoFinal.toFixed(2)}`;
     displayMeta.innerText = `Renda: R$ ${rendaUsuario.toFixed(2)}`;
@@ -179,3 +194,8 @@ function inicializarGrafico() {
 }
 
 function atualizarGrafico(dados) { if (meuGrafico) { meuGrafico.data.datasets[0].data = Object.values(dados); meuGrafico.update(); } }
+
+// --- EXPORTAÇÃO PARA O JEST ---
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { calcularSaldo };
+}
