@@ -1,0 +1,27 @@
+{
+  "name": "bootcamp-gerenciador-simples-gastos-pessoais",
+  "version": "1.0.0",
+  "description": "O **FinanceX** é uma aplicação web de controle financeiro pessoal projetada para ajudar o usuário a monitorar gastos, definir metas de investimento e visualizar a saúde do seu orçamento de forma simples e intuitiva.",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BernardesSilva/Bootcamp-Gerenciador-Simples-Gastos-Pessoais.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/BernardesSilva/Bootcamp-Gerenciador-Simples-Gastos-Pessoais/issues"
+  },
+  "homepage": "https://github.com/BernardesSilva/Bootcamp-Gerenciador-Simples-Gastos-Pessoais#readme",
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.2.0",
+    "globals": "^17.5.0",
+    "jest": "^30.3.0"
+  }
+}
