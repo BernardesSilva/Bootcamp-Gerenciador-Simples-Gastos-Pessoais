@@ -18,10 +18,6 @@ let acaoPendente = null;
 // 2. LÓGICA DE NEGÓCIOS (Funções Puras - Tópico 17)
 // ==========================================
 
-/**
- * Calcula o saldo disponível subtraindo as despesas da renda total.
- * Mantida exatamente igual para não quebrar o arquivo de teste (finance.test.js)
- */
 function calcularSaldo(renda, despesas) {
     const r = parseFloat(renda);
     const d = parseFloat(despesas);
@@ -29,16 +25,10 @@ function calcularSaldo(renda, despesas) {
     return r - d;
 }
 
-/**
- * Calcula o total de despesas de um array de gastos.
- */
 function calcularTotalGastos(listaGastos) {
     return listaGastos.reduce((acc, g) => acc + g.valor, 0);
 }
 
-/**
- * Agrupa e soma os valores dos gastos por suas respectivas categorias.
- */
 function calcularGastosPorCategoria(listaGastos) {
     const totais = { 'Alimentação': 0, 'Transporte': 0, 'Lazer': 0, 'Outros': 0 };
     listaGastos.forEach(g => {
@@ -49,9 +39,6 @@ function calcularGastosPorCategoria(listaGastos) {
     return totais;
 }
 
-/**
- * Mapeia as cores de destaque de cada categoria (Componentização - Tópico 18)
- */
 function getColor(cat) { 
     return { 'Alimentação': '#3498db', 'Transporte': '#f1c40f', 'Lazer': '#9b59b6', 'Outros': '#95a5a6' }[cat]; 
 }
@@ -67,12 +54,9 @@ function salvar() {
 }
 
 // ==========================================
-// 4. COMPONENTIZAÇÃO DE INTERFACE (UI - Tópico 18 e 20)
+// 4. COMPONENTIZAÇÃO DE INTERFACE (UI - Tópico 18)
 // ==========================================
 
-/**
- * Cria a estrutura de elemento (HTML) para uma linha na tabela de gastos.
- */
 function criarLinhaGastoHTML(gasto) {
     const tr = document.createElement('tr');
     tr.innerHTML = `
@@ -85,9 +69,6 @@ function criarLinhaGastoHTML(gasto) {
     return tr;
 }
 
-/**
- * Cria o elemento HTML de um card para o histórico de meses fechados.
- */
 function criarCardHistoricoHTML(mes, idx) {
     const div = document.createElement('div');
     div.className = 'card card-mes animate-in';
@@ -109,55 +90,57 @@ function criarCardHistoricoHTML(mes, idx) {
 // ==========================================
 
 function atualizarTela() {
+    if (typeof document === 'undefined') return;
+
     const totalGastoNum = calcularTotalGastos(gastos);
     const saldoFinal = calcularSaldo(rendaUsuario, totalGastoNum);
 
-    // Elementos de texto de resumo
-    document.getElementById('total-gasto').innerText = `R$ ${totalGastoNum.toFixed(2)}`;
-    document.getElementById('saldo-total').innerText = `R$ ${saldoFinal.toFixed(2)}`;
-    document.getElementById('invest-acumulado').innerText = `R$ ${investimento.acumulado.toFixed(2)}`;
+    // Atualiza elementos de texto com segurança
+    if (document.getElementById('total-gasto')) document.getElementById('total-gasto').innerText = `R$ ${totalGastoNum.toFixed(2)}`;
+    if (document.getElementById('saldo-total')) document.getElementById('saldo-total').innerText = `R$ ${saldoFinal.toFixed(2)}`;
+    if (document.getElementById('invest-acumulado')) document.getElementById('invest-acumulado').innerText = `R$ ${investimento.acumulado.toFixed(2)}`;
 
-    // Feedback visual do saldo (Melhoria de UX - Tópico 20)
-    const cardSaldo = document.getElementById('saldo-total').parentElement;
-    if (saldoFinal < 0) {
-        cardSaldo.style.borderColor = 'var(--danger)';
-    } else {
-        cardSaldo.style.borderColor = 'var(--card-border)';
+    // Feedback visual do card de saldo (UX - Tópico 20)
+    const elSaldo = document.getElementById('saldo-total');
+    if (elSaldo && elSaldo.parentElement) {
+        elSaldo.parentElement.style.borderColor = saldoFinal < 0 ? 'var(--danger)' : 'var(--card-border)';
     }
 
-    // Gerenciamento de Categorias individuais nos Cards superiores
+    // Categorias nos Cards superiores
     const catsTotais = calcularGastosPorCategoria(gastos);
-    document.getElementById('c-val-alim').innerText = `R$ ${catsTotais['Alimentação'].toFixed(2)}`;
-    document.getElementById('c-val-trans').innerText = `R$ ${catsTotais['Transporte'].toFixed(2)}`;
-    document.getElementById('c-val-lazer').innerText = `R$ ${catsTotais['Lazer'].toFixed(2)}`;
-    document.getElementById('c-val-outros').innerText = `R$ ${catsTotais['Outros'].toFixed(2)}`;
+    if (document.getElementById('c-val-alim')) document.getElementById('c-val-alim').innerText = `R$ ${catsTotais['Alimentação'].toFixed(2)}`;
+    if (document.getElementById('c-val-trans')) document.getElementById('c-val-trans').innerText = `R$ ${catsTotais['Transporte'].toFixed(2)}`;
+    if (document.getElementById('c-val-lazer')) document.getElementById('c-val-lazer').innerText = `R$ ${catsTotais['Lazer'].toFixed(2)}`;
+    if (document.getElementById('c-val-outros')) document.getElementById('c-val-outros').innerText = `R$ ${catsTotais['Outros'].toFixed(2)}`;
 
-    // Atualização da Barra de Progresso de Metas
+    // Barra de Progresso
     const progressFill = document.getElementById('progress-fill');
-    if (investimento.meta > 0) {
-        const pct = Math.min((investimento.acumulado / investimento.meta) * 100, 100);
-        progressFill.style.width = `${pct}%`;
-        document.getElementById('meta-pct').innerText = `${pct.toFixed(1)}%`;
-    } else {
-        progressFill.style.width = '0%';
-        document.getElementById('meta-pct').innerText = '0%';
+    if (progressFill) {
+        if (investimento.meta > 0) {
+            const pct = Math.min((investimento.acumulado / investimento.meta) * 100, 100);
+            progressFill.style.width = `${pct}%`;
+            if (document.getElementById('meta-pct')) document.getElementById('meta-pct').innerText = `${pct.toFixed(1)}%`;
+        } else {
+            progressFill.style.width = '0%';
+            if (document.getElementById('meta-pct')) document.getElementById('meta-pct').innerText = '0%';
+        }
     }
 
-    // Renderização da tabela de gastos ativos (Tópico 18)
+    // Renderização da tabela de gastos ativos
     const tabela = document.getElementById('corpo-tabela');
-    tabela.innerHTML = '';
-    gastos.forEach(g => {
-        tabela.appendChild(criarLinhaGastoHTML(g));
-    });
+    if (tabela) {
+        tabela.innerHTML = '';
+        gastos.forEach(g => tabela.appendChild(criarLinhaGastoHTML(g)));
+    }
 
-    // Renderização do histórico de meses anteriores (Tópico 18)
+    // Renderização do histórico
     const listaHist = document.getElementById('lista-historico');
-    listaHist.innerHTML = '';
-    historicoMeses.forEach((mes, idx) => {
-        listaHist.appendChild(criarCardHistoricoHTML(mes, idx));
-    });
+    if (listaHist) {
+        listaHist.innerHTML = '';
+        historicoMeses.forEach((mes, idx) => listaHist.appendChild(criarCardHistoricoHTML(mes, idx)));
+    }
 
-    // Atualização reativa do Gráfico do Chart.js
+    // Atualização do Gráfico do Chart.js
     if (meuGrafico) {
         meuGrafico.data.datasets[0].data = [
             catsTotais['Alimentação'], 
@@ -170,7 +153,9 @@ function atualizarTela() {
 }
 
 function inicializarGrafico() {
-    const ctx = document.getElementById('meuGrafico').getContext('2d');
+    const canvas = document.getElementById('meuGrafico');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
     meuGrafico = new Chart(ctx, { 
         type: 'doughnut', 
         data: { 
@@ -191,6 +176,7 @@ function inicializarGrafico() {
 
 function abrirDetalhesMes(idx) {
     const mes = historicoMeses[idx];
+    if (!mes) return;
     document.getElementById('modal-titulo').innerText = `Detalhes: ${mes.nome}`;
     const corpo = document.getElementById('corpo-modal');
     corpo.innerHTML = '';
@@ -206,7 +192,8 @@ function abrirDetalhesMes(idx) {
 }
 
 function fecharModal(id) { 
-    document.getElementById(id).style.display = "none"; 
+    const modal = document.getElementById(id);
+    if (modal) modal.style.display = "none"; 
 }
 
 function confirmarAcao(tipo) {
@@ -217,7 +204,6 @@ function confirmarAcao(tipo) {
     document.getElementById('modal-confirmacao').style.display = "block";
 }
 
-// Configuração dos botões do modal de confirmação
 if (typeof window !== 'undefined') {
     document.addEventListener('DOMContentLoaded', () => {
         const btnSim = document.getElementById('btn-confirmar-sim');
@@ -233,7 +219,7 @@ if (typeof window !== 'undefined') {
 }
 
 // ==========================================
-// 7. AÇÕES DO USUÁRIO (Event Handlers - Feedbacks UX Tópico 20)
+// 7. AÇÕES DO USUÁRIO (Event Handlers - Feedbacks UX Corrigidos)
 // ==========================================
 
 function adicionarGasto() {
@@ -244,26 +230,25 @@ function adicionarGasto() {
 
     let erro = false;
     
-    // Validação visual de erro nos inputs (UX)
+    // Validação robusta e amigável
     if (!desc.value.trim()) { 
-        desc.nextElementSibling.style.display = 'block'; 
         desc.style.borderColor = 'var(--danger)';
         erro = true; 
     } else { 
-        desc.nextElementSibling.style.display = 'none'; 
         desc.style.borderColor = 'var(--card-border)';
     }
     
     if (!valor.value || parseFloat(valor.value) <= 0) { 
-        valor.nextElementSibling.style.display = 'block'; 
         valor.style.borderColor = 'var(--danger)';
         erro = true; 
     } else { 
-        valor.nextElementSibling.style.display = 'none'; 
         valor.style.borderColor = 'var(--card-border)';
     }
 
-    if (erro) return;
+    if (erro) {
+        alert('Por favor, preencha a descrição e um valor maior que zero!');
+        return;
+    }
 
     gastos.push({
         id: Date.now(),
@@ -279,7 +264,7 @@ function adicionarGasto() {
     salvar(); 
     atualizarTela();
 
-    // Feedback visual temporário de sucesso no botão registrar (UX)
+    // Feedback reativo no botão (Tópico 20)
     const btnRegistrar = document.getElementById('btn-registrar');
     if (btnRegistrar) {
         const textoOriginal = btnRegistrar.innerText;
@@ -288,7 +273,7 @@ function adicionarGasto() {
         setTimeout(() => {
             btnRegistrar.innerText = textoOriginal;
             btnRegistrar.style.backgroundColor = "var(--primary)";
-        }, 1500);
+        }, 1200);
     }
 }
 
@@ -301,8 +286,6 @@ function adicionarInvestimento() {
         input.style.borderColor = 'var(--card-border)';
         salvar(); 
         atualizarTela();
-        
-        // Alerta de confirmação de sucesso (UX)
         alert('📈 Investimento adicionado com sucesso!');
     } else {
         input.style.borderColor = 'var(--danger)';
@@ -395,7 +378,6 @@ if (typeof window !== 'undefined') {
     };
 }
 
-// Exportações idênticas mantidas para o Jest
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { calcularSaldo };
 }
