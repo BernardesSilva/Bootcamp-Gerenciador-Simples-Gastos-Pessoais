@@ -58,6 +58,7 @@ Para validar as ferramentas de qualidade e automação, é necessário ter o **N
 - **Eventos e DOM:** Manipulação dinâmica de elementos via `addEventListener` e injeção de componentes.
 - **Persistência:** Salvamento do estado local da aplicação através de `localStorage`.
 
+
     📌 Informações Técnicas
     Versão Atual: 1.1.0 (Versionamento Semântico)
 
