@@ -26,22 +26,21 @@
                 </div>
                 <div class="field">
                     <input type="number" id="valor" placeholder="R$ 0,00" step="0.01">
-                    <span class="error-msg">Mín. R$ 0,10!</span>
+                    <span class="error-msg">Inválido!</span>
+                </div>
+                <div class="field">
+                    <select id="categoria">
+                        <option value="Alimentação">Alimentação</option>
+                        <option value="Transporte">Transporte</option>
+                        <option value="Lazer">Lazer</option>
+                        <option value="Outros">Outros</option>
+                    </select>
                 </div>
                 <div class="field">
                     <input type="date" id="data">
-                    <span class="error-msg">Inválido!</span>
                 </div>
-                <select id="categoria">
-                    <option value="Alimentação">🛒 Alimentação</option>
-                    <option value="Transporte">🚗 Transporte</option>
-                    <option value="Lazer">🍿 Lazer</option>
-                    <option value="Outros">⚙️ Outros</option>
-                </select>
                 <button onclick="adicionarGasto()" id="btn-registrar">Registrar</button>
             </div>
-
-            <div id="cards-categorias" class="category-grid"></div>
 
             <div class="table-container">
                 <table>
@@ -54,58 +53,68 @@
                             <th>Ação</th>
                         </tr>
                     </thead>
-                    <tbody id="corpo-tabela"></tbody>
+                    <tbody id="corpo-tabela">
+                        </tbody>
                 </table>
             </div>
         </div>
 
         <div class="side-panel">
-            <div class="card budget-card">
-                <h3>Minha Renda</h3>
-                <div class="budget-input">
-                    <input type="number" id="renda-input" placeholder="Ex: 1400,00">
+            <div class="card status-card">
+                <h3>Renda Mensal</h3>
+                <div class="invest-inputs" style="margin-top: 10px;">
+                    <input type="number" id="renda-input" placeholder="R$ 0,00" step="0.01">
                     <button onclick="definirRenda()">Definir</button>
                 </div>
             </div>
 
-            <div class="card invest-card">
-                <h3>📈 Investimentos</h3>
+            <div class="card status-card">
+                <h3>Saldo Disponível</h3>
+                <p id="saldo-disponivel">R$ 0,00</p>
+            </div>
+
+            <div class="card status-card">
+                <h3>Total Gasto</h3>
+                <p id="total-gasto" class="text-danger">R$ 0,00</p>
+            </div>
+
+            <div class="card">
+                <h3>Metas de Investimento</h3>
                 <div class="invest-inputs">
-                    <input type="number" id="invest-meta" placeholder="Meta Total">
-                    <input type="number" id="invest-aporte" placeholder="+ Aporte">
-                    <button onclick="adicionarAporte()">Reservar</button>
+                    <input type="number" id="invest-meta" placeholder="Meta" step="0.01">
+                    <button onclick="definirMeta()">Definir</button>
+                </div>
+                <div class="invest-inputs">
+                    <input type="number" id="invest-valor" placeholder="Aporte" step="0.01">
+                    <button onclick="adicionarInvestimento()">Investir</button>
                 </div>
                 <div class="progress-bar-bg">
-                    <div id="invest-bar" class="progress-bar-fill invest-bar-color"></div>
+                    <div id="progress-bar-fill" class="progress-bar-fill" style="width: 0%;"></div>
                 </div>
                 <div class="meta-status">
-                    <small id="display-invest-meta">Meta: R$ 0,00</small>
-                    <small id="display-invest-valor">Total: R$ 0,00</small>
+                    <span>Acumulado: <strong id="invest-acumulado">R$ 0,00</strong></span>
+                    <span>0%</span>
                 </div>
             </div>
 
-            <div class="card info-card">
-                <p class="total-label">Saldo Disponível:</p>
-                <h2 id="total-valor">R$ 0,00</h2>
-                <div class="progress-bar-bg">
-                    <div id="progress-bar" class="progress-bar-fill"></div>
+            <div class="card text-center">
+                <h3>Distribuição de Gastos</h3>
+                <div class="chart-container">
+                    <canvas id="meuGrafico"></canvas>
+                    <div class="chart-labels">
+                        <div class="label-item"><span class="dot alim"></span>Alimentação: <strong id="c-val-alim">R$ 0,00</strong></div>
+                        <div class="label-item"><span class="dot trans"></span>Transporte: <strong id="c-val-trans">R$ 0,00</strong></div>
+                        <div class="label-item"><span class="dot lazer"></span>Lazer: <strong id="c-val-lazer">R$ 0,00</strong></div>
+                        <div class="label-item"><span class="dot outros"></span>Outros: <strong id="c-val-outros">R$ 0,00</strong></div>
+                    </div>
                 </div>
-                <div class="meta-status">
-                    <small id="display-meta">Renda: R$ 0,00</small>
-                    <small id="saldo-meta">R$ 0,00 restantes</small>
-                </div>
             </div>
 
-            <div class="card history-card">
-                <h3>📂 Histórico de Meses</h3>
-                <ul id="lista-meses-fechados"></ul>
+            <div class="card">
+                <h3>Histórico de Meses</h3>
+                <div id="lista-historico" class="historico-lista">
+                    </div>
             </div>
-
-            <div class="card chart-card">
-                <canvas id="meuGrafico"></canvas>
-            </div>
-
-            <div class="version-tag">v1.1.0</div>
         </div>
     </div>
 

@@ -4,19 +4,12 @@ if (typeof localStorage === "undefined" || localStorage === null) {
     global.localStorage = new LocalStorage('./scratch');
 }
 
-// ==========================================
-// 1. ESTADO DA APLICAÇÃO (State - Tópico 19)
-// ==========================================
 let gastos = JSON.parse(localStorage.getItem('f_data')) || [];
 let rendaUsuario = parseFloat(localStorage.getItem('f_renda')) || 0;
 let historicoMeses = JSON.parse(localStorage.getItem('f_historico')) || [];
 let investimento = JSON.parse(localStorage.getItem('f_invest')) || { meta: 0, acumulado: 0 };
-let meuGrafico;
+let meuGrafico = null;
 let acaoPendente = null;
-
-// ==========================================
-// 2. LÓGICA DE NEGÓCIOS (Funções Puras - Tópico 17)
-// ==========================================
 
 function calcularSaldo(renda, despesas) {
     const r = parseFloat(renda);
@@ -43,9 +36,7 @@ function getColor(cat) {
     return { 'Alimentação': '#3498db', 'Transporte': '#f1c40f', 'Lazer': '#9b59b6', 'Outros': '#95a5a6' }[cat]; 
 }
 
-// ==========================================
-// 3. PERSISTÊNCIA (Local Storage - Tópico 19)
-// ==========================================
+
 function salvar() {
     localStorage.setItem('f_data', JSON.stringify(gastos));
     localStorage.setItem('f_renda', rendaUsuario);
@@ -53,9 +44,6 @@ function salvar() {
     localStorage.setItem('f_invest', JSON.stringify(investimento));
 }
 
-// ==========================================
-// 4. COMPONENTIZAÇÃO DE INTERFACE (UI - Tópico 18)
-// ==========================================
 
 function criarLinhaGastoHTML(gasto) {
     const tr = document.createElement('tr');
@@ -64,30 +52,28 @@ function criarLinhaGastoHTML(gasto) {
         <td><span class="badge" style="background: ${getColor(gasto.categoria)}">${gasto.categoria}</span></td>
         <td>${gasto.data.split('-').reverse().join('/')}</td>
         <td class="text-danger">R$ ${gasto.valor.toFixed(2)}</td>
-        <td><button class="btn-del" onclick="removerGasto(${gasto.id})">❌</button></td>
+        <td><button class="btn-del" onclick="removerGasto(${gasto.id})" style="background:none; border:none; cursor:pointer;">❌</button></td>
     `;
     return tr;
 }
 
 function criarCardHistoricoHTML(mes, idx) {
     const div = document.createElement('div');
-    div.className = 'card card-mes animate-in';
-    div.onclick = () => abrirDetalhesMes(idx);
+    div.className = 'card-mes';
+    // Estilização interna customizada para se adequar perfeitamente ao .historico-lista do seu style.css
+    div.style.cssText = "background: #101624; border: 1px solid #1e2638; padding: 12px; border-radius: 8px; cursor: pointer; color: white; margin-top: 10px;";
+    div.setAttribute('onclick', `abrirDetalhesMes(${idx})`);
     div.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <strong>📌 ${mes.nome}</strong>
-            <span class="text-muted" style="font-size:0.75rem">${mes.fechadoEm}</span>
+            <span style="font-size:0.75rem; color:#a0a8b8;">${mes.fechadoEm}</span>
         </div>
-        <p style="margin:5px 0 0 0; font-size:0.85rem">Renda: <span class="text-success">R$ ${mes.renda.toFixed(2)}</span></p>
-        <p style="margin:2px 0 0 0; font-size:0.85rem">Gastos: <span class="text-danger">R$ ${mes.totalGastos.toFixed(2)}</span></p>
+        <p style="margin:5px 0 0 0; font-size:0.85rem">Renda: <span style="color:#2ecc71;">R$ ${mes.renda.toFixed(2)}</span></p>
+        <p style="margin:2px 0 0 0; font-size:0.85rem">Gastos: <span style="color:#e74c3c;">R$ ${mes.totalGastos.toFixed(2)}</span></p>
         <p style="margin:2px 0 0 0; font-size:0.85rem">Saldo: <strong>R$ ${(mes.renda - mes.totalGastos).toFixed(2)}</strong></p>
     `;
     return div;
 }
-
-// ==========================================
-// 5. GERENCIAMENTO E MANIPULAÇÃO DO DOM (Tela)
-// ==========================================
 
 function atualizarTela() {
     if (typeof document === 'undefined') return;
@@ -95,52 +81,47 @@ function atualizarTela() {
     const totalGastoNum = calcularTotalGastos(gastos);
     const saldoFinal = calcularSaldo(rendaUsuario, totalGastoNum);
 
-    // Atualiza elementos de texto com segurança
-    if (document.getElementById('total-gasto')) document.getElementById('total-gasto').innerText = `R$ ${totalGastoNum.toFixed(2)}`;
-    if (document.getElementById('saldo-total')) document.getElementById('saldo-total').innerText = `R$ ${saldoFinal.toFixed(2)}`;
-    if (document.getElementById('invest-acumulado')) document.getElementById('invest-acumulado').innerText = `R$ ${investimento.acumulado.toFixed(2)}`;
+    const elTotalGasto = document.getElementById('total-gasto');
+    if (elTotalGasto) elTotalGasto.innerText = `R$ ${totalGastoNum.toFixed(2)}`;
 
-    // Feedback visual do card de saldo (UX - Tópico 20)
-    const elSaldo = document.getElementById('saldo-total');
-    if (elSaldo && elSaldo.parentElement) {
-        elSaldo.parentElement.style.borderColor = saldoFinal < 0 ? 'var(--danger)' : 'var(--card-border)';
-    }
+    const elSaldo = document.getElementById('saldo-disponivel');
+    if (elSaldo) elSaldo.innerText = `R$ ${saldoFinal.toFixed(2)}`;
 
-    // Categorias nos Cards superiores
+    const elInvestAcumulado = document.getElementById('invest-acumulado');
+    if (elInvestAcumulado) elInvestAcumulado.innerText = `R$ ${investimento.acumulado.toFixed(2)}`;
+
     const catsTotais = calcularGastosPorCategoria(gastos);
-    if (document.getElementById('c-val-alim')) document.getElementById('c-val-alim').innerText = `R$ ${catsTotais['Alimentação'].toFixed(2)}`;
-    if (document.getElementById('c-val-trans')) document.getElementById('c-val-trans').innerText = `R$ ${catsTotais['Transporte'].toFixed(2)}`;
-    if (document.getElementById('c-val-lazer')) document.getElementById('c-val-lazer').innerText = `R$ ${catsTotais['Lazer'].toFixed(2)}`;
-    if (document.getElementById('c-val-outros')) document.getElementById('c-val-outros').innerText = `R$ ${catsTotais['Outros'].toFixed(2)}`;
+    const elAlim = document.getElementById('c-val-alim'); if (elAlim) elAlim.innerText = `R$ ${catsTotais['Alimentação'].toFixed(2)}`;
+    const elTrans = document.getElementById('c-val-trans'); if (elTrans) elTrans.innerText = `R$ ${catsTotais['Transporte'].toFixed(2)}`;
+    const elLazer = document.getElementById('c-val-lazer'); if (elLazer) elLazer.innerText = `R$ ${catsTotais['Lazer'].toFixed(2)}`;
+    const elOutros = document.getElementById('c-val-outros'); if (elOutros) elOutros.innerText = `R$ ${catsTotais['Outros'].toFixed(2)}`;
 
-    // Barra de Progresso
-    const progressFill = document.getElementById('progress-fill');
-    if (progressFill) {
-        if (investimento.meta > 0) {
-            const pct = Math.min((investimento.acumulado / investimento.meta) * 100, 100);
-            progressFill.style.width = `${pct}%`;
-            if (document.getElementById('meta-pct')) document.getElementById('meta-pct').innerText = `${pct.toFixed(1)}%`;
-        } else {
-            progressFill.style.width = '0%';
-            if (document.getElementById('meta-pct')) document.getElementById('meta-pct').innerText = '0%';
-        }
+
+    const progressFill = document.getElementById('progress-bar-fill');
+    const metaStatusSpan = document.querySelector('.meta-status span:last-child');
+    if (investimento.meta > 0) {
+        const pct = Math.min((investimento.acumulado / investimento.meta) * 100, 100);
+        if (progressFill) progressFill.style.width = `${pct}%`;
+        if (metaStatusSpan) metaStatusSpan.innerText = `${pct.toFixed(1)}%`;
+    } else {
+        if (progressFill) progressFill.style.width = '0%';
+        if (metaStatusSpan) metaStatusSpan.innerText = '0%';
     }
 
-    // Renderização da tabela de gastos ativos
     const tabela = document.getElementById('corpo-tabela');
     if (tabela) {
         tabela.innerHTML = '';
         gastos.forEach(g => tabela.appendChild(criarLinhaGastoHTML(g)));
     }
 
-    // Renderização do histórico
     const listaHist = document.getElementById('lista-historico');
     if (listaHist) {
         listaHist.innerHTML = '';
-        historicoMeses.forEach((mes, idx) => listaHist.appendChild(criarCardHistoricoHTML(mes, idx)));
+        historicoMeses.forEach((mes, idx) => {
+            listaHist.appendChild(criarCardHistoricoHTML(mes, idx));
+        });
     }
 
-    // Atualização do Gráfico do Chart.js
     if (meuGrafico) {
         meuGrafico.data.datasets[0].data = [
             catsTotais['Alimentação'], 
@@ -154,41 +135,43 @@ function atualizarTela() {
 
 function inicializarGrafico() {
     const canvas = document.getElementById('meuGrafico');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    meuGrafico = new Chart(ctx, { 
-        type: 'doughnut', 
-        data: { 
-            labels: ['Alimentação', 'Transporte', 'Lazer', 'Outros'], 
-            datasets: [{ 
-                data: [0, 0, 0, 0], 
-                backgroundColor: ['#3498db', '#f1c40f', '#9b59b6', '#95a5a6'], 
-                borderWidth: 0 
-            }] 
-        }, 
-        options: { plugins: { legend: { display: false } }, cutout: '75%' } 
-    });
+    if (!canvas) return; 
+    try {
+        const ctx = canvas.getContext('2d');
+        meuGrafico = new Chart(ctx, { 
+            type: 'doughnut', 
+            data: { 
+                labels: ['Alimentação', 'Transporte', 'Lazer', 'Outros'], 
+                datasets: [{ 
+                    data: [0, 0, 0, 0], 
+                    backgroundColor: ['#3498db', '#f1c40f', '#9b59b6', '#95a5a6'], 
+                    borderWidth: 0 
+                }] 
+            }, 
+            options: { plugins: { legend: { display: false } }, cutout: '75%' } 
+        });
+    } catch (e) {
+        console.warn("Gráfico falhou ao iniciar.");
+    }
 }
 
-// ==========================================
-// 6. INTERAÇÕES E MODAIS (UX/UI - Tópico 20)
-// ==========================================
 
 function abrirDetalhesMes(idx) {
     const mes = historicoMeses[idx];
     if (!mes) return;
-    document.getElementById('modal-titulo').innerText = `Detalhes: ${mes.nome}`;
+    
+    const titulo = document.getElementById('modal-titulo');
+    if (titulo) titulo.innerText = `Detalhes: ${mes.nome}`;
+    
     const corpo = document.getElementById('corpo-modal');
-    corpo.innerHTML = '';
-    
-    mes.itens.forEach(i => {
-        corpo.innerHTML += `<tr><td>${i.desc}</td><td><span class="badge" style="background:${getColor(i.categoria)}">${i.categoria}</span></td><td>${i.data.split('-').reverse().join('/')}</td><td>R$ ${i.valor.toFixed(2)}</td></tr>`;
-    });
-    
-    if (mes.investido > 0) {
-        corpo.innerHTML += `<tr style="background: rgba(52, 152, 219, 0.1); font-weight: bold;"><td>Total Investido</td><td>📈 Investimento</td><td>-</td><td>R$ ${mes.investido.toFixed(2)}</td></tr>`;
+    if (corpo) {
+        corpo.innerHTML = '';
+        mes.itens.forEach(i => {
+            corpo.innerHTML += `<tr><td>${i.desc}</td><td><span class="badge" style="background:${getColor(i.categoria)}">${i.categoria}</span></td><td>${i.data.split('-').reverse().join('/')}</td><td>R$ ${i.valor.toFixed(2)}</td></tr>`;
+        });
     }
-    document.getElementById('modal-historico').style.display = "block";
+    const modalHist = document.getElementById('modal-historico');
+    if (modalHist) modalHist.style.display = "block";
 }
 
 function fecharModal(id) { 
@@ -199,28 +182,28 @@ function fecharModal(id) {
 function confirmarAcao(tipo) {
     acaoPendente = tipo;
     const msg = document.getElementById('confirm-mensagem');
-    if (tipo === 'ATUAL') msg.innerText = "Deseja realmente limpar todos os lançamentos do mês atual? Esta ação não pode ser desfeita.";
-    if (tipo === 'FECHAR_MES') msg.innerText = "Deseja fechar o mês atual e arquivá-lo no histórico?";
-    document.getElementById('modal-confirmacao').style.display = "block";
+    if (msg) {
+        if (tipo === 'ATUAL') msg.innerText = "Deseja realmente limpar todos os lançamentos do mês atual?";
+        if (tipo === 'FECHAR_MES') msg.innerText = "Deseja fechar o mês atual e salvá-lo no histórico?";
+    }
+    const modal = document.getElementById('modal-confirmacao');
+    if (modal) modal.style.display = "block";
 }
 
-if (typeof window !== 'undefined') {
-    document.addEventListener('DOMContentLoaded', () => {
-        const btnSim = document.getElementById('btn-confirmar-sim');
-        if (btnSim) {
-            btnSim.onclick = () => {
-                fecharModal('modal-confirmacao');
-                if (acaoPendente === 'ATUAL') limparAtual();
-                if (acaoPendente === 'FECHAR_MES') fecharMes();
-                acaoPendente = null;
-            };
-        }
-    });
+function definirRenda() {
+    const input = document.getElementById('renda-input');
+    if (!input) return;
+    const r = parseFloat(input.value);
+    if (!isNaN(r) && r >= 0) {
+        rendaUsuario = r;
+        salvar(); 
+        atualizarTela();
+        alert('💰 Renda fixada com sucesso!');
+    } else {
+        alert('Insira um valor de renda válido.');
+    }
 }
-
-// ==========================================
-// 7. AÇÕES DO USUÁRIO (Event Handlers - Feedbacks UX Corrigidos)
-// ==========================================
+function atualizarRenda() { definirRenda(); }
 
 function adicionarGasto() {
     const desc = document.getElementById('desc');
@@ -228,25 +211,10 @@ function adicionarGasto() {
     const cat = document.getElementById('categoria');
     const data = document.getElementById('data');
 
-    let erro = false;
-    
-    // Validação robusta e amigável
-    if (!desc.value.trim()) { 
-        desc.style.borderColor = 'var(--danger)';
-        erro = true; 
-    } else { 
-        desc.style.borderColor = 'var(--card-border)';
-    }
-    
-    if (!valor.value || parseFloat(valor.value) <= 0) { 
-        valor.style.borderColor = 'var(--danger)';
-        erro = true; 
-    } else { 
-        valor.style.borderColor = 'var(--card-border)';
-    }
+    if (!desc || !valor || !cat || !data) return;
 
-    if (erro) {
-        alert('Por favor, preencha a descrição e um valor maior que zero!');
+    if (!desc.value.trim() || !valor.value || parseFloat(valor.value) <= 0) {
+        alert('Por favor, preencha a descrição e um valor válido!');
         return;
     }
 
@@ -260,68 +228,35 @@ function adicionarGasto() {
 
     desc.value = ''; 
     valor.value = '';
-    
     salvar(); 
     atualizarTela();
-
-    // Feedback reativo no botão (Tópico 20)
-    const btnRegistrar = document.getElementById('btn-registrar');
-    if (btnRegistrar) {
-        const textoOriginal = btnRegistrar.innerText;
-        btnRegistrar.innerText = "✅ Registrado!";
-        btnRegistrar.style.backgroundColor = "#27ae60";
-        setTimeout(() => {
-            btnRegistrar.innerText = textoOriginal;
-            btnRegistrar.style.backgroundColor = "var(--primary)";
-        }, 1200);
-    }
 }
 
 function adicionarInvestimento() {
     const input = document.getElementById('invest-valor');
+    if (!input) return;
     const v = parseFloat(input.value);
     if (!isNaN(v) && v > 0) {
         investimento.acumulado += v;
         input.value = '';
-        input.style.borderColor = 'var(--card-border)';
         salvar(); 
         atualizarTela();
-        alert('📈 Investimento adicionado com sucesso!');
-    } else {
-        input.style.borderColor = 'var(--danger)';
-        alert('Por favor, insira um valor de investimento válido.');
+        alert('📈 Investimento adicionado!');
     }
 }
 
-function atualizarMeta() {
+function definirMeta() {
     const input = document.getElementById('invest-meta');
+    if (!input) return;
     const m = parseFloat(input.value);
     if (!isNaN(m) && m >= 0) {
         investimento.meta = m;
-        input.style.borderColor = 'var(--card-border)';
         salvar(); 
         atualizarTela();
-        alert('🎯 Meta de investimento atualizada!');
-    } else {
-        input.style.borderColor = 'var(--danger)';
-        alert('Insira um valor de meta válido.');
+        alert('🎯 Meta definida!');
     }
 }
-
-function atualizarRenda() {
-    const input = document.getElementById('renda-input');
-    const r = parseFloat(input.value);
-    if (!isNaN(r) && r >= 0) {
-        rendaUsuario = r;
-        input.style.borderColor = 'var(--card-border)';
-        salvar(); 
-        atualizarTela();
-        alert('💰 Renda atualizada com sucesso!');
-    } else {
-        input.style.borderColor = 'var(--danger)';
-        alert('Insira um valor de renda válido.');
-    }
-}
+function atualizarMeta() { definirMeta(); }
 
 function removerGasto(id) { 
     gastos = gastos.filter(g => g.id !== id); 
@@ -333,15 +268,10 @@ function limparAtual() {
     gastos = []; 
     salvar(); 
     atualizarTela(); 
-    alert('🗑️ Todos os lançamentos do mês atual foram limpos.');
 }
 
 function prepararFechamento() { 
-    if (gastos.length > 0 || investimento.acumulado > 0) {
-        confirmarAcao('FECHAR_MES'); 
-    } else {
-        alert('Não há lançamentos ou investimentos para fechar o mês.');
-    }
+    confirmarAcao('FECHAR_MES'); 
 }
 
 function fecharMes() {
@@ -354,25 +284,51 @@ function fecharMes() {
         fechadoEm: d.toLocaleDateString('pt-BR'),
         renda: rendaUsuario,
         totalGastos: calcularTotalGastos(gastos),
-        investido: investimento.acumulado,
         itens: [...gastos]
     });
 
     gastos = [];
+    rendaUsuario = 0; 
     investimento.acumulado = 0;
     salvar();
     atualizarTela();
-    alert('🔒 Mês fechado e enviado para o histórico com sucesso!');
+    
+    const inputRenda = document.getElementById('renda-input');
+    if (inputRenda) inputRenda.value = '';
+
+    alert('🔒 Mês arquivado no histórico!');
 }
 
-// ==========================================
-// 8. INICIALIZAÇÃO DO SISTEMA
-// ==========================================
 if (typeof window !== 'undefined') {
+    window.definirRenda = definirRenda;
+    window.atualizarRenda = definirRenda;
+    window.adicionarGasto = adicionarGasto;
+    window.removerGasto = removerGasto;
+    window.adicionarInvestimento = adicionarInvestimento;
+    window.definirMeta = definirMeta;
+    window.atualizarMeta = definirMeta;
+    window.prepararFechamento = prepararFechamento;
+    window.fecharModal = fecharModal;
+    window.confirmarAcao = confirmarAcao;
+    window.abrirDetalhesMes = abrirDetalhesMes;
+
+    window.addEventListener('DOMContentLoaded', () => {
+        const btnSim = document.getElementById('btn-confirmar-sim');
+        if (btnSim) {
+            btnSim.onclick = () => {
+                fecharModal('modal-confirmacao');
+                if (acaoPendente === 'ATUAL') limparAtual();
+                if (acaoPendente === 'FECHAR_MES') fecharMes();
+                acaoPendente = null;
+            };
+        }
+    });
+
     window.onload = () => {
-        if (document.getElementById('data')) document.getElementById('data').valueAsDate = new Date();
-        if (document.getElementById('renda-input')) document.getElementById('renda-input').value = rendaUsuario;
-        if (document.getElementById('invest-meta')) document.getElementById('invest-meta').value = investimento.meta;
+        const elData = document.getElementById('data'); if (elData) elData.valueAsDate = new Date();
+        const elRenda = document.getElementById('renda-input'); if (elRenda && rendaUsuario > 0) elRenda.value = rendaUsuario;
+        const elMeta = document.getElementById('invest-meta'); if (elMeta && investimento.meta > 0) elMeta.value = investimento.meta;
+        
         inicializarGrafico();
         atualizarTela();
     };
