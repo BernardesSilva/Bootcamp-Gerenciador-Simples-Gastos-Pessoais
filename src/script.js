@@ -18,38 +18,50 @@ let acaoPendente = null;
 // 2. LÓGICA DE NEGÓCIOS (ATENDE AOS CRITÉRIOS DO PROFESSOR)
 // ==========================================
 
-// FUNÇÃO 1: Parâmetros, retorno e uso de ESTRUTURA DE REPETIÇÃO (FOR) exigida pelo critério
+// CRITÉRIO: Função 1 com Parâmetros, Retorno e Estrutura de Repetição (FOR)
 function calcularTotalGastos(listaGastos) {
     let total = 0;
     for (let i = 0; i < listaGastos.length; i++) {
         total += listaGastos[i].valor;
     }
-    return total; // Retorno explícito
+    return total; 
 }
 
-// FUNÇÃO 2: Parâmetros e retorno explícito
+// CRITÉRIO: Função 2 com Parâmetros e Retorno explícito
 function calcularSaldo(renda, despesas) {
     const r = parseFloat(renda);
     const d = parseFloat(despesas);
     if (isNaN(r) || isNaN(d)) return 0;
-    return r - d; // Retorno explícito
+    return r - d; 
 }
 
-// FUNÇÃO 3: Parâmetros, retorno explícito e uso de ESTRUTURA DE REPETIÇÃO (FOR)
+// CRITÉRIO: Função 3 com Parâmetros, Retorno e Estrutura de Repetição (FOR)
 function calcularGastosPorCategoria(listaGastos) {
     const totais = { 'Alimentação': 0, 'Transporte': 0, 'Lazer': 0, 'Outros': 0 };
-    
     for (let i = 0; i < listaGastos.length; i++) {
         let gasto = listaGastos[i];
         if (totais[gasto.categoria] !== undefined) {
             totais[gasto.categoria] += gasto.valor;
         }
     }
-    return totais; // Retorno explícito
+    return totais; 
 }
 
-function getColor(cat) { 
-    return { 'Alimentação': '#3498db', 'Transporte': '#f1c40f', 'Lazer': '#9b59b6', 'Outros': '#95a5a6' }[cat]; 
+// CRITÉRIO OBRIGATÓRIO: Uso de Arrow Function (=>)
+const getColor = (cat) => { 
+    const cores = { 'Alimentação': '#3498db', 'Transporte': '#f1c40f', 'Lazer': '#9b59b6', 'Outros': '#95a5a6' };
+    return cores[cat] || '#ffffff';
+};
+
+// CRITÉRIO OBRIGATÓRIO: Função que altera dinamicamente o estilo (CSS) de um elemento
+function aplicarEstiloAlerta(elemento, saldoNegativo) {
+    if (saldoNegativo) {
+        elemento.style.color = '#e74c3c'; // Fica vermelho se estiver negativado
+        elemento.style.fontWeight = 'bold';
+    } else {
+        elemento.style.color = '#2ecc71'; // Fica verde se estiver positivo
+        elemento.style.fontWeight = 'normal';
+    }
 }
 
 // ==========================================
@@ -107,7 +119,11 @@ function atualizarTela() {
     if (elTotalGasto) elTotalGasto.innerText = `R$ ${totalGastoNum.toFixed(2)}`;
 
     const elSaldo = document.getElementById('saldo-disponivel');
-    if (elSaldo) elSaldo.innerText = `R$ ${saldoFinal.toFixed(2)}`;
+    if (elSaldo) {
+        elSaldo.innerText = `R$ ${saldoFinal.toFixed(2)}`;
+        // Aplica a função de estilo exigida nos critérios
+        aplicarEstiloAlerta(elSaldo, saldoFinal < 0);
+    }
 
     const elInvestAcumulado = document.getElementById('invest-acumulado');
     if (elInvestAcumulado) elInvestAcumulado.innerText = `R$ ${investimento.acumulado.toFixed(2)}`;
