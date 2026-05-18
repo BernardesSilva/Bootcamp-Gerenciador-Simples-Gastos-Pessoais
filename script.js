@@ -270,6 +270,7 @@ function adicionarGasto() {
         data: data.value || new Date().toISOString().split('T')[0]
     });
 
+// Limpa os campos após adicionar o gasto
     desc.value = ''; 
     valor.value = '';
     salvar(); 

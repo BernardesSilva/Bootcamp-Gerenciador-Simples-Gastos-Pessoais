@@ -28,6 +28,9 @@ Indivíduos que buscam uma ferramenta leve e direta, sem a complexidade de cadas
 * **JavaScript (Vanilla)** (Lógica de negócios, manipulação do DOM e persistência)
 * **Chart.js** (Renderização de gráficos dinâmicos via API pública/CDN)
 
+
+..
+
 ## 📥 Instalação e Execução (Para Avaliação)
 
 Para validar as ferramentas de qualidade e automação, é necessário ter o **Node.js** instalado.
