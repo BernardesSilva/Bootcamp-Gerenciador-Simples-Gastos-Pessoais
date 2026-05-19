@@ -66,6 +66,8 @@ Para validar as ferramentas de qualidade e automação, é necessário ter o **N
 
     Repositório oficial: GitHub FinanceX
 
+     Link da Aplicação: tangerine-chaja-59128f.netlify.app/
+
     Projeto desenvolvido como parte do aprendizado em desenvolvimento web e engenharia de software.
 
 
